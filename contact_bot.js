@@ -78,4 +78,4 @@ bot.on('contact', (msg) => {
     }
 });
 
-console.log('Бот запущен...)
+console.log('Бот запущен...');
