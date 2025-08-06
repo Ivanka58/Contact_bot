@@ -7,8 +7,8 @@
     "start": "node contact_bot.js"
   },
   "dependencies": {
-    "node-telegram-bot-api": "^0.64.0", 
-    "node-schedule": "^2.1.1"
+    "node-telegram-bot-api": "^0.64.0",
+    "uuid": "^9.0.1"
   },
   "author": "Ivanka58",
   "license": "MIT"
