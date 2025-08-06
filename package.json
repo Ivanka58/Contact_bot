@@ -1,0 +1,15 @@
+{
+  "name": "contact_bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for InvaCoin",
+  "main": "contact_bot.js",
+  "scripts": {
+    "start": "node contact_bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.64.0", 
+    "node-schedule": "^2.1.1"
+  },
+  "author": "Ivanka58",
+  "license": "MIT"
+}
