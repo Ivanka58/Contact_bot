@@ -2,7 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const { v4: uuidv4 } = require('uuid');
 
 // Замените на свой токен бота, полученный от BotFather
-const BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN";
+const BOT_TOKEN = "7723573817:AAHELwscobE3LOI1Sdfgvp9_xWqtPlJYn_4";
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
