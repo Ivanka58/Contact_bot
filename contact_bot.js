@@ -2,7 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const { v4: uuidv4 } = require('uuid');
 
 // Замените на свой токен бота, полученный от BotFather
-const BOT_TOKEN = "7723573817:AAHELwscobE3LOI1Sdfgvp9_xWqtPlJYn_4";
+const BOT_TOKEN = "7723573817:AAHELwscobE3LOI1Sdfgvp9_xWqtPlJYn_4"; // Замените!
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
@@ -36,7 +36,7 @@ bot.onText(/\/start/, async (msg, match) => {
                 }
             };
 
-            bot.sendMessage(chatId, "Вы перешли по ссылке! Пожалуйста, поделитесь своим контактом. ", keyboard);
+            bot.sendMessage(chatId, "Вы перешли по ссылке! Пожалуйста, поделитесь своим контактом.", keyboard);
         } else {
             bot.sendMessage(chatId, "Неверная ссылка.");
         }
@@ -51,7 +51,7 @@ bot.onText(/\/generate_link/, async (msg, match) => {
     linkData[uniqueId] = userId; // Сохраняем соответствие
 
     const botUsername = (await bot.getMe()).username; // Получаем имя пользователя бота асинхронно
-    const link = `t.me/${botUsername}?start=${uniqueId}`;
+    const link = `https://t.me/${botUsername}?start=${uniqueId}`; // Использован полный URL
     bot.sendMessage(chatId, `Ваша ссылка: ${link}`);
 });
 
