@@ -78,16 +78,4 @@ bot.on('contact', (msg) => {
     }
 });
 
-console.log('Бот запущен...');
-const port = process.env.PORT || 3000;
-
-server.listen(port, (err) => {
-    if (err) {
-        console.error(`Ошибка при запуске сервера: ${err.message}`);
-        logToFile(`Ошибка при запуске сервера: ${err.message}`);
-        process.exit(1); // Завершаем приложение с ошибкой
-    } else {
-        console.log(`Сервер запущен на порту ${port}`);
-        logToFile(`Сервер запущен на порту ${port}`);
-    }
-});
+console.log('Бот запущен...)
