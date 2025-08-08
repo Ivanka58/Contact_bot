@@ -1,97 +1,133 @@
 const TelegramBot = require('node-telegram-bot-api');
-const { v4: uuidv4 } = require('uuid');
 
-// Замените на свой токен бота, полученный от BotFather
-const BOT_TOKEN = "7723573817:AAHELwscobE3LOI1Sdfgvp9_xWqtPlJYn_4";
+// Замените 'YOUR_BOT_TOKEN' на токен вашего бота
+const token = '7964336070:AAFyXbc-UGYvKwM2B2wYlY0grBynfWBlsJE';
 
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+// Создаем экземпляр бота
+const bot = new TelegramBot(token, { polling: true });
 
-// Словарь для хранения соответствия user_id и кодового слова
-const keywordData = {};
+// Объект для хранения планов (ключ - ID чата, значение - массив планов)
+const plans = {};
 
-// Словарь для хранения userID создателя и перешедшего (после ввода кодового слова).
-const contactRequests = {};
-
-bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Привет! Используйте /set_keyword, чтобы задать кодовое слово, и /enter_keyword, чтобы ввести кодовое слово.");
-});
-
-// Обработчик команды /set_keyword
-bot.onText(/\/set_keyword/, (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-
-  bot.sendMessage(chatId, "Пожалуйста, введите кодовое слово:");
-
-  // Ожидаем следующее сообщение от пользователя
-  bot.once('message', (msg) => {
-    const keyword = msg.text;
-    keywordData[userId] = keyword; // Сохраняем кодовое слово
-    bot.sendMessage(chatId, "Кодовое слово сохранено!");
-  });
-});
-
-// Обработчик команды /enter_keyword
-bot.onText(/\/enter_keyword/, (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-
-  bot.sendMessage(chatId, "Пожалуйста, введите кодовое слово:");
-
-  // Ожидаем следующее сообщение от пользователя
-  bot.once('message', (msg) => {
-    const enteredKeyword = msg.text;
-    let creatorId = null;
-
-    // Ищем создателя по кодовому слову
-    for (const id in keywordData) {
-      if (keywordData[id] === enteredKeyword) {
-        creatorId = id;
-        break;
-      }
+// Функция для добавления плана
+function addPlan(chatId, time, task) {
+    if (!plans[chatId]) {
+        plans[chatId] = [];
     }
+    plans[chatId].push({ time: time, task: task });
+}
 
-    if (creatorId) {
-      contactRequests[userId] = creatorId; // Сохраняем creatorId для последующей передачи контакта
+// Функция для удаления плана
+function deletePlan(chatId, index) {
+    if (plans[chatId] && plans[chatId][index]) {
+        plans[chatId].splice(index, 1);
+        return true;
+    }
+    return false;
+}
 
-      // Запрашиваем контакт у пользователя
-      const keyboard = {
-        "reply_markup": {
-          "keyboard": [[{
-            text: "Поделиться контактом",
-            request_contact: true
-          }]],
-          "one_time_keyboard": true,
-          "resize_keyboard": true
+// Функция для отправки напоминания
+function sendReminder(chatId, time, task) {
+    bot.sendMessage(chatId, `Напоминание! В ${time} - ${task}`);
+}
+
+// Функция для проверки и отправки напоминаний
+function checkReminders() {
+    const now = new Date();
+    const currentHour = String(now.getHours()).padStart(2, '0');
+    const currentMinute = String(now.getMinutes()).padStart(2, '0');
+    const currentTime = `${currentHour}:${currentMinute}`;
+
+    for (const chatId in plans) {
+        if (plans.hasOwnProperty(chatId)) {
+            plans[chatId].forEach((plan) => {
+                if (plan.time === currentTime) {
+                    sendReminder(chatId, plan.time, plan.task);
+                }
+            });
         }
-      };
-
-      bot.sendMessage(chatId, "Кодовое слово найдено! Пожалуйста, поделитесь своим контактом.", keyboard);
-    } else {
-      bot.sendMessage(chatId, "Кодовое слово не найдено( ");
     }
-  });
+}
+
+// Запускаем проверку напоминаний каждую минуту
+setInterval(checkReminders, 60 * 1000); // 60000 миллисекунд = 1 минута
+
+// Обработчик команды /addplan
+bot.onText(/\/addplan (.+)/, (msg, match) => {
+    const chatId = msg.chat.id;
+    const text = match[1]; // Текст после /addplan
+
+    // Разбираем текст на время и задачу
+    const parts = text.split(' ');
+    const time = parts[0];
+    const task = parts.slice(1).join(' ');
+
+    // Проверяем, что время указано в правильном формате (например, "10:00")
+    if (!/^\d{2}:\d{2}$/.test(time)) {
+        bot.sendMessage(chatId, 'Неверный формат времени. Используйте формат ЧЧ:ММ (например, 10:00).');
+        return;
+    }
+
+    if (!task) {
+        bot.sendMessage(chatId, 'Пожалуйста, укажите задачу.');
+        return;
+    }
+
+    addPlan(chatId, time, task);
+    bot.sendMessage(chatId, `План добавлен: ${time} - ${task}`);
+});
+if (plans[chatId] && plans[chatId].length > 0) {
+        let message = 'Ваши планы:\n';
+        plans[chatId].forEach((plan, index) => {
+            message += `${index + 1}. ${plan.time} - ${plan.task}\n`;
+        });
+        bot.sendMessage(chatId, message);
+    } else {
+        bot.sendMessage(chatId, 'У вас пока нет планов.');
+    }
 });
 
-// Обработчик получения контакта
-bot.on('contact', (msg) => {
-  const chatId = msg.chat.id;
-  const userId = msg.from.id;
-  const contact = msg.contact;
+// Обработчик команды /deleteplan
+bot.onText(/\/deleteplan (\d+)/, (msg, match) => {
+    const chatId = msg.chat.id;
+    const index = parseInt(match[1]) - 1; // Индекс плана (начинается с 1)
 
-  if (contactRequests[userId]) {
-    const creatorId = contactRequests[userId];
-    const contactName = msg.contact.first_name + (msg.contact.last_name ? ' ' + msg.contact.last_name : '');
+    if (isNaN(index) || index < 0) {
+        bot.sendMessage(chatId, 'Неверный номер плана.');
+        return;
+    }
 
-    // Отправляем пользователю 1 имя контакта
-    bot.sendMessage(creatorId, `Пользователь, знающий кодовое слово, поделился контактом. Имя контакта: ${contactName}`);
+    if (deletePlan(chatId, index)) {
+        bot.sendMessage(chatId, 'План удален.');
+    } else {
+        bot.sendMessage(chatId, 'План с таким номером не найден.');
+    }
+});
 
-    delete contactRequests[userId]; // Удаляем запрос, чтобы не отправлять имя повторно
-    bot.sendMessage(chatId, "Спасибо за участие в тестировании моего бота!");
-  } else {
-    bot.sendMessage(chatId, "Произошла ошибка. Пожалуйста, введите кодовое слово еще раз.");
-  }
+// Обработчик команды /start
+bot.onText(/\/start/, (msg) => {
+    const chatId = msg.chat.id;
+    const helpText = `Привет! Я бот-напоминалка.\n\n` +
+                     `**Список команд:**\n` +
+                     `/start - Начать работу с ботом\n` +
+                     `/addplan <время> <задача> - Добавить новый план (например, /addplan 10:00 Встреча с клиентом)\n` +
+                     `/listplans - Показать список всех планов\n` +
+                     `/deleteplan <номер> - Удалить план по номеру из списка (например, /deleteplan 1)\n`;
+    bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' }); // Используем Markdown для форматирования
+});
+
+// Обработчик команды /help (если хотите отдельную команду помощи)
+bot.onText(/\/help/, (msg) => {
+    const chatId = msg.chat.id;
+    const helpText = `**Список команд:**\n` +
+                     `/start - Начать работу с ботом\n` +
+                     `/addplan <время> <задача> - Добавить новый план (например, /addplan 10:00 Встреча с клиентом)\n` +
+                     `/listplans - Показать список всех планов\n` +
+                     `/deleteplan <номер> - Удалить план по номеру из списка (например, /deleteplan 1)\n`;
+    bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
 });
 
 console.log('Бот запущен...');
+// Обработчик команды /listplans
+bot.onText(/\/listplans/, (msg) => {
+    const chatId = msg.chat.id;
